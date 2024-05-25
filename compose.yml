@@ -1,0 +1,28 @@
+version: '3'
+services:
+  redis:
+    image: redis/redis-stack:latest
+  api-server:
+    image: thinkpoet/api-server:0.0.1
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    environment:
+      - OPEN_WEATHER_API_KEY=${OPEN_WEATHER_API_KEY}
+      - REDIS_HOST=redis
+    depends_on:
+      - redis
+    restart: always
+  web-ui:
+    image: thinkpoet/web-ui:0.0.1
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    restart: always
+  nginx:
+    image: nginx:latest
+    ports:
+      - 11180:80
+    volumes:
+      - ${PWD}/nginx.conf:/etc/nginx/nginx.conf
+    restart: always

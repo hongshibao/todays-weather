@@ -24,13 +24,13 @@ const WeatherResult = ({ weatherData, style }) => {
     return <></>;
   }
 
-  if (!("City" in weatherData)) {
+  if ("Error" in weatherData) {
     return (
       <Space.Compact direction="vertical" style={{ width: "100%", marginBottom: "3%" }}>
         <Text
           style={{ backgroundColor: "#F7E1E1", borderColor: "#E78788", borderStyle: "solid" }}
         >
-          &nbsp;&nbsp;Not Found
+          &nbsp;&nbsp;{weatherData.Error}
         </Text>
       </Space.Compact>
     );
@@ -38,9 +38,9 @@ const WeatherResult = ({ weatherData, style }) => {
 
   return (
     <Space.Compact direction="vertical" style={{ marginLeft: "2%" }}>
-      <Text>{`${weatherData["City"]}, ${weatherData["Country"]}`}</Text>
+      <Text>{`${weatherData.City}, ${weatherData.Country}`}</Text>
       <Title level={1} style={{ margin: 0, marginBottom: "5%" }}>
-        Cloudy
+        {weatherData.Group}
       </Title>
       <table>
         <tbody>

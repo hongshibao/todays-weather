@@ -42,7 +42,6 @@ class OpenWeatherAPI(WeatherIf):
                 "lat": geolocation.Lat,
                 "lon": geolocation.Lon,
                 "appid": self._api_key,
-                "units": "metric",
             },
         ) as resp:
             result = await resp.json()
@@ -51,9 +50,10 @@ class OpenWeatherAPI(WeatherIf):
             return None
 
         return schema.WeatherReport(
-            Group=result["weather"]["main"],
-            Description=result["weather"]["description"],
-            Temperature=result["main"]["temp"],
+            Group=result["weather"][0]["main"],
+            Description=result["weather"][0]["description"],
+            Temperature=f'{result["main"]["temp_min"]}°C ~ {result["main"]["temp_max"]}°C',
             Humidity=f'{result["main"]["humidity"]}%',
             Time=result["dt"],
+            Timezone=result["timezone"],
         )

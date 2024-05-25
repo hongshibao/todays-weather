@@ -10,10 +10,11 @@ class Geolocation(BaseModel):
 class WeatherReport(BaseModel):
     Group: str
     Description: str
-    Temperature: float
+    Temperature: str
     Humidity: str
     # timestamp
     Time: int
+    Timezone: int
 
 
 class WeatherResponse(BaseModel):

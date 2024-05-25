@@ -43,7 +43,7 @@ async def _query_geolocation_with_cache(
         if geolocation:
             # Cache result
             geolocation_json = geolocation.model_dump_json()
-            redis_client.set(key, geolocation_json)
+            await redis_client.set(key, geolocation_json)
     else:
         cached_data = json.loads(cached_result)
         geolocation = schema.Geolocation(**cached_data)
@@ -60,6 +60,8 @@ async def _query_weather(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global weather_api, redis_client
+
     logger.debug("Running startup")
     RunVar("_default_thread_limiter").set(CapacityLimiter(FASTAPI_MAX_THREADS))
     # Init OpenWeatherAPI
@@ -127,6 +129,7 @@ async def get_weather(city: str, country: str) -> schema.WeatherResponse:
             weather_report = await _query_weather(geolocation)
             if weather_report:
                 resp.Report = weather_report
+                resp.Error = ""
     except Exception as ex:
         logger.exception(ex)
         resp.Error = "System Error"

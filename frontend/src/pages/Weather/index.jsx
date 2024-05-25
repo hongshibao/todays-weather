@@ -1,7 +1,8 @@
-import { Card, Typography, Layout, Space, theme } from 'antd';
+import { Card, Typography, Layout, Space } from 'antd';
 import CityForm from './components/CityForm';
 import WeatherResult from './components/WeatherResult';
 import SearchHistory from './components/SearchHistory';
+import { getWeather } from '../../services/WeatherAPI';
 import { useCallback, useEffect, useState } from 'react';
 const { Header, Content, Footer } = Layout;
 
@@ -10,11 +11,30 @@ const { Title } = Typography;
 const maxHistoryDataLength = 10;
 const localStorageSearchHistoryKey = "search-history";
 
-const Weather = () => {
-  const {
-    token: { colorBgContainer, borderRadiusLG },
-  } = theme.useToken();
+function formatDate(inputDate, format) {
+  if (!inputDate) return '';
 
+  const padZero = (value) => (value < 10 ? `0${value}` : `${value}`);
+  const parts = {
+    yyyy: inputDate.getUTCFullYear(),
+    MM: padZero(inputDate.getUTCMonth() + 1),
+    dd: padZero(inputDate.getUTCDate()),
+    HH: padZero(inputDate.getUTCHours()),
+    hh: padZero(inputDate.getUTCHours() > 12 ? inputDate.getUTCHours() - 12 : inputDate.getUTCHours()),
+    mm: padZero(inputDate.getUTCMinutes()),
+    ss: padZero(inputDate.getUTCSeconds()),
+    tt: inputDate.getUTCHours() < 12 ? 'AM' : 'PM'
+  };
+
+  return format.replace(/yyyy|MM|dd|HH|hh|mm|ss|tt/g, (match) => parts[match]);
+}
+
+const timestampToDateString = (ts, timezoneOffset, format) => {
+  const d = new Date((ts + timezoneOffset) * 1000);
+  return formatDate(d, format);
+};
+
+const Weather = () => {
   const [historyData, setHistoryData] = useState(() => {
     // Getting stored value from localStorage to initialize search historyData
     const saved = localStorage.getItem(localStorageSearchHistoryKey);
@@ -28,21 +48,28 @@ const Weather = () => {
     localStorage.setItem(localStorageSearchHistoryKey, JSON.stringify(historyData));
   }, [historyData]);
 
-  const cityFormSubmitHandler = useCallback((values) => {
-    console.log('Success:', values);
-    // Mock API result
-    const newWeatherData = {
-      "City": values["City"],
-      "Country": values["Country"],
-      "Description": "Description - value",
-      "Temperature": "Temperature - value",
-      "Humidity": "Humidity - value",
-      "Time": "200022222222222",
-    };
+  const cityFormSubmitHandler = useCallback(async (values) => {
+    // Call weather API
+    const resp = await getWeather(values.City, values.Country);
+    console.log(resp);
+    let newWeatherData = {};
+    if (resp.Error) {
+      newWeatherData = { Error: resp.Error };
+    } else {
+      newWeatherData = { City: values.City, Country: values.Country, ...resp.Report };
+      newWeatherData.Time = timestampToDateString(resp.Report.Time, resp.Report.Timezone, "yyyy-MM-dd hh:mm tt");
+    }
+    console.log(newWeatherData);
     setWeatherData(newWeatherData);
     setHistoryData((data) => {
+      const currentDate = new Date();
+      console.log(currentDate.getTime());
       const newData = [
-        { City: values["City"], Country: values["Country"], Time: new Date().toUTCString() },
+        {
+          City: values.City,
+          Country: values.Country,
+          Time: timestampToDateString(currentDate.getTime() / 1000, -currentDate.getTimezoneOffset() * 60, "hh:mm:ss tt"),
+        },
         ...data
       ];
       if (newData.length > maxHistoryDataLength) {
