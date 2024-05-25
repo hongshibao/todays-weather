@@ -6,6 +6,12 @@ from server.weather_if import WeatherIf
 
 
 class OpenWeatherAPI(WeatherIf):
+    '''
+    `OpenWeatherAPI` implements `WeatherIf` interface.
+    Parameters:
+        api_key: openweather API key
+        timeout_seconds: http timeout settings in seconds
+    '''
     def __init__(self, api_key: str, timeout_seconds: float) -> None:
         self._api_key = api_key
         self._timeout_seconds = timeout_seconds

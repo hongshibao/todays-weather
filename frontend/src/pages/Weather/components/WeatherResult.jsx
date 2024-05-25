@@ -3,6 +3,12 @@ import { useCallback } from 'react';
 
 const { Title, Text } = Typography;
 
+/*
+The WeatherResult component is to display the result weather information.
+  weatherData: object {City: str, Country: str, Group: str, Description: str, Temperature: str, Humidity: str, Time: str}
+                weatherData is null means not need to display
+                if Error is inside weatherData, then display Error text (e.g. Not Found)
+*/
 const WeatherResult = ({ weatherData }) => {
   const renderWeatherDataFields = useCallback(() => {
     const fieldNames = ["Description", "Temperature", "Humidity", "Time"];
@@ -20,10 +26,12 @@ const WeatherResult = ({ weatherData }) => {
     });
   }, [weatherData]);
 
+  // weatherData is null, nothing displayed
   if (!weatherData) {
     return <></>;
   }
 
+  // Display error info
   if ("Error" in weatherData) {
     return (
       <Space.Compact direction="vertical" style={{ width: "100%", marginBottom: "3%" }}>

@@ -14,6 +14,7 @@ class WeatherReport(BaseModel):
     Humidity: str
     # timestamp
     Time: int
+    # timezone offset to UTC (in seconds)
     Timezone: int
 
 

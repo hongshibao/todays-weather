@@ -5,16 +5,21 @@ import { useCallback } from 'react';
 const { Title, Text } = Typography;
 
 /*
-  historyData: Arrary of Object {"city": str, "country": str, "time": number}
+The SearchHistory component.
+  historyData: arrary of bbject {"City": str, "Country": str, "Time": str}, defined from `useState` of React
+  setHistoryData: the function to update historyData, defined from `useState` of React
+  searchHandler: the function to handle search request when search button is clicked
 */
 const SearchHistory = ({ historyData, setHistoryData, searchHandler }) => {
-
+  // Function to delete an entry of historyData
   const deleteHistoryData = useCallback((targetIdx) => {
     setHistoryData(data => data.filter((item, idx) => idx !== targetIdx));
   }, [setHistoryData]);
 
+  // Function to render the search history entries in SearchHistory section
   const renderHistoryData = useCallback(() => {
     if (!historyData || historyData.length == 0) {
+      // No record
       return (
         <Text
           style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: "large", margin: "5%" }}

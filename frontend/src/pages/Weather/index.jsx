@@ -11,6 +11,7 @@ const { Title } = Typography;
 const maxHistoryDataLength = 10;
 const localStorageSearchHistoryKey = "search-history";
 
+// Format date input
 function formatDate(inputDate, format) {
   if (!inputDate) return '';
 
@@ -29,11 +30,13 @@ function formatDate(inputDate, format) {
   return format.replace(/yyyy|MM|dd|HH|hh|mm|ss|tt/g, (match) => parts[match]);
 }
 
+// Timestamp to date string
 const timestampToDateString = (ts, timezoneOffset, format) => {
   const d = new Date((ts + timezoneOffset) * 1000);
   return formatDate(d, format);
 };
 
+// Weather component for the main Weather page
 const Weather = () => {
   const [historyData, setHistoryData] = useState(() => {
     // Getting stored value from localStorage to initialize search historyData
@@ -49,9 +52,15 @@ const Weather = () => {
   }, [historyData]);
 
   const cityFormSubmitHandler = useCallback(async (values) => {
+    let resp = {};
     // Call weather API
-    const resp = await getWeather(values.City, values.Country);
-    console.log(resp);
+    try {
+      resp = await getWeather(values.City, values.Country);
+    } catch (err) {
+      // Exception found, set Error info
+      resp = { Error: "Service Unavailable" }
+    }
+
     let newWeatherData = {};
     if (resp.Error) {
       newWeatherData = { Error: resp.Error };
@@ -59,11 +68,11 @@ const Weather = () => {
       newWeatherData = { City: values.City, Country: values.Country, ...resp.Report };
       newWeatherData.Time = timestampToDateString(resp.Report.Time, resp.Report.Timezone, "yyyy-MM-dd hh:mm tt");
     }
-    console.log(newWeatherData);
+    // Update weatherData
     setWeatherData(newWeatherData);
+    // Update search historyData
     setHistoryData((data) => {
       const currentDate = new Date();
-      console.log(currentDate.getTime());
       const newData = [
         {
           City: values.City,
@@ -100,14 +109,7 @@ const Weather = () => {
           padding: '0 8px',
         }}
       >
-        <Card
-        // style={{
-        //   padding: 24,
-        //   minHeight: 380,
-        //   background: colorBgContainer,
-        //   borderRadius: borderRadiusLG,
-        // }}
-        >
+        <Card>
           <Space direction="vertical" style={{ width: "100%" }}>
             <CityForm submitHandler={cityFormSubmitHandler} />
             <WeatherResult weatherData={weatherData} />

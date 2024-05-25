@@ -21,6 +21,10 @@ const SubmitButton = ({ form, children }) => {
   );
 };
 
+/*
+The form to input and submit City and Country info.
+  submitHandler: the function to be called on form submitted.
+*/
 const CityForm = ({ submitHandler }) => {
   const [form] = Form.useForm();
 

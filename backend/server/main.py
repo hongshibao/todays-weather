@@ -33,8 +33,12 @@ redis_client: redis.Redis = None
 async def _query_geolocation_with_cache(
     city: str, country: str
 ) -> Optional[schema.Geolocation]:
+    '''
+    Since geolocation change is rare for a city, Redis cache is used for caching API results.
+    '''
     geolocation = None
 
+    # Key for cache item
     key = f"{city.lower()}-{country.lower()}"
     cached_result = await redis_client.get(key)
     if cached_result is None:
@@ -54,6 +58,10 @@ async def _query_geolocation_with_cache(
 async def _query_weather(
     geolocation: schema.Geolocation,
 ) -> Optional[schema.WeatherReport]:
+    '''
+    Query weather information. If performance is a concern, Redis cache can still be used here 
+        with a suitable cache item timeout setting.
+    '''
     weather_report = await weather_api.get_weather(geolocation)
     return weather_report
 
@@ -87,7 +95,9 @@ async def log_process_time(req: Request, call_next: Callable):
     if req.url.path.endswith("/healthz"):
         return await call_next(req)
 
+    # Inject correlation_id in logging for each request
     with logger.contextualize(correlation_id=context.get(HeaderKeys.correlation_id)):
+        # Add an enter log for the request
         logger.bind(
             state="begin",
             req_url_path=req.url.path,
@@ -100,6 +110,7 @@ async def log_process_time(req: Request, call_next: Callable):
         end_time = time.time()
         used_time = end_time - start_time
 
+        # Add an exit log for the request
         logger.bind(
             state="finish",
             req_url_path=req.url.path,
@@ -122,6 +133,7 @@ def check_health():
 
 @app.get("/weather")
 async def get_weather(city: str, country: str) -> schema.WeatherResponse:
+    # Default Error: Not Found
     resp = schema.WeatherResponse(City=city, Country=country, Error="Not Found")
     try:
         geolocation = await _query_geolocation_with_cache(city, country)
@@ -132,6 +144,7 @@ async def get_weather(city: str, country: str) -> schema.WeatherResponse:
                 resp.Error = ""
     except Exception as ex:
         logger.exception(ex)
+        # All exception is treated as `System Error`. Error info can be further refined.
         resp.Error = "System Error"
 
     return resp
