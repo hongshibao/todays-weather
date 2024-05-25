@@ -1,3 +1,5 @@
 loguru==0.7.2
 fastapi==0.111.0
 starlette-context==0.3.6
+aiohttp==3.9.5
+redis[hiredis]==5.0.4

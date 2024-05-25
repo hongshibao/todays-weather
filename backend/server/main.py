@@ -1,3 +1,4 @@
+from typing import Callable, Optional
 from fastapi import FastAPI, Request
 from anyio.lowlevel import RunVar
 from anyio import CapacityLimiter
@@ -7,26 +8,80 @@ from starlette_context.middleware.raw_middleware import RawContextMiddleware
 from contextlib import asynccontextmanager
 import time
 import os
-
+import json
+import redis.asyncio as redis
 
 from utils.log import logger
 from server import schema
+from server.weather_if import WeatherIf
+from server.open_weather_api import OpenWeatherAPI
+
+
+# Env vars
+FASTAPI_MAX_THREADS = int(os.getenv("FASTAPI_MAX_THREADS", 8))
+OPEN_WEATHER_API_KEY = os.environ["OPEN_WEATHER_API_KEY"]
+OPEN_WEATHER_API_TIMEOUT = float(os.getenv("OPEN_WEATHER_API_TIMEOUT", 5))
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+REDIS_DB = int(os.getenv("REDIS_DB", 0))
+
+
+weather_api: WeatherIf = None
+redis_client: redis.Redis = None
+
+
+async def _query_geolocation_with_cache(
+    city: str, country: str
+) -> Optional[schema.Geolocation]:
+    geolocation = None
+
+    key = f"{city.lower()}-{country.lower()}"
+    cached_result = await redis_client.get(key)
+    if cached_result is None:
+        # No result is cached, query API
+        geolocation = await weather_api.get_geocoding(city, country)
+        if geolocation:
+            # Cache result
+            geolocation_json = geolocation.model_dump_json()
+            redis_client.set(key, geolocation_json)
+    else:
+        cached_data = json.loads(cached_result)
+        geolocation = schema.Geolocation(**cached_data)
+
+    return geolocation
+
+
+async def _query_weather(
+    geolocation: schema.Geolocation,
+) -> Optional[schema.WeatherReport]:
+    weather_report = await weather_api.get_weather(geolocation)
+    return weather_report
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.debug("Running startup")
-    fastapi_max_threads = int(os.getenv("FASTAPI_MAX_THREADS", 8))
-    RunVar("_default_thread_limiter").set(CapacityLimiter(fastapi_max_threads))
+    RunVar("_default_thread_limiter").set(CapacityLimiter(FASTAPI_MAX_THREADS))
+    # Init OpenWeatherAPI
+    weather_api = OpenWeatherAPI(
+        api_key=OPEN_WEATHER_API_KEY, timeout_seconds=OPEN_WEATHER_API_TIMEOUT
+    )
+    await weather_api.__aenter__()
+    # Init Redis connection
+    redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
     logger.debug("Finished running startup")
     yield
+    # Close Redis connection
+    await redis_client.aclose()
+    # Close OpenWeatherAPI
+    await weather_api.__aexit__()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, root_path="/api")
 
 
 @app.middleware("http")
-async def log_process_time(req: Request, call_next):
+async def log_process_time(req: Request, call_next: Callable):
     if req.url.path.endswith("/healthz"):
         return await call_next(req)
 
@@ -65,4 +120,15 @@ def check_health():
 
 @app.get("/weather")
 async def get_weather(city: str, country: str) -> schema.WeatherResponse:
-    pass
+    resp = schema.WeatherResponse(City=city, Country=country, Error="Not Found")
+    try:
+        geolocation = await _query_geolocation_with_cache(city, country)
+        if geolocation:
+            weather_report = await _query_weather(geolocation)
+            if weather_report:
+                resp.Report = weather_report
+    except Exception as ex:
+        logger.exception(ex)
+        resp.Error = "System Error"
+
+    return resp
