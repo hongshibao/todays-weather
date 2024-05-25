@@ -2,11 +2,6 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class Geolocation(BaseModel):
-    Lat: float
-    Lon: float
-
-
 class WeatherReport(BaseModel):
     Group: str
     Description: str
@@ -20,7 +15,7 @@ class WeatherReport(BaseModel):
 
 class WeatherResponse(BaseModel):
     City: str
-    Country: str
+    Country: Optional[str] = None
     # Report
     Report: Optional[WeatherReport] = None
     # Error message

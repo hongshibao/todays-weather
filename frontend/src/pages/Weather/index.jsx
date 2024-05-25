@@ -53,6 +53,10 @@ const Weather = () => {
   }, [historyData]);
 
   const cityFormSubmitHandler = useCallback(async (values) => {
+    values.City = values.City.trim();
+    if (values.Country) {
+      values.Country = values.Country.trim();
+    }
     let resp = {};
     // Call weather API
     setWeatherDataLoading(true);

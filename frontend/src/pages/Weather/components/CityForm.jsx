@@ -45,11 +45,6 @@ const CityForm = ({ submitHandler }) => {
         <Form.Item
           name="Country"
           label="Country"
-          rules={[
-            {
-              required: true,
-            },
-          ]}
         >
           <Input />
         </Form.Item>

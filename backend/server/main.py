@@ -30,39 +30,31 @@ weather_api: WeatherIf = None
 redis_client: redis.Redis = None
 
 
-async def _query_geolocation_with_cache(
-    city: str, country: str
-) -> Optional[schema.Geolocation]:
-    '''
-    Since geolocation change is rare for a city, Redis cache is used for caching API results.
-    '''
-    geolocation = None
+async def _query_weather_with_cache(
+    city: str, country: Optional[str]
+) -> Optional[schema.WeatherReport]:
+    """
+    Query weather information. Redis cache is used for caching API results for a while.
+    """
+    weather_report = None
 
     # Key for cache item
-    key = f"{city.lower()}-{country.lower()}"
+    if country:
+        key = f"{city.lower()}-{country.lower()}"
+    else:
+        key = city.lower()
     cached_result = await redis_client.get(key)
     if cached_result is None:
         # No result is cached, query API
-        geolocation = await weather_api.get_geocoding(city, country)
-        if geolocation:
-            # Cache result
-            geolocation_json = geolocation.model_dump_json()
-            await redis_client.set(key, geolocation_json)
+        weather_report = await weather_api.get_weather(city, country)
+        if weather_report:
+            # Cache result for 300 seconds
+            weather_report_json = weather_report.model_dump_json()
+            await redis_client.set(key, weather_report_json, ex=300)
     else:
         cached_data = json.loads(cached_result)
-        geolocation = schema.Geolocation(**cached_data)
+        weather_report = schema.WeatherReport(**cached_data)
 
-    return geolocation
-
-
-async def _query_weather(
-    geolocation: schema.Geolocation,
-) -> Optional[schema.WeatherReport]:
-    '''
-    Query weather information. If performance is a concern, Redis cache can still be used here 
-        with a suitable cache item timeout setting.
-    '''
-    weather_report = await weather_api.get_weather(geolocation)
     return weather_report
 
 
@@ -132,16 +124,14 @@ def check_health():
 
 
 @app.get("/weather")
-async def get_weather(city: str, country: str) -> schema.WeatherResponse:
+async def get_weather(city: str, country: Optional[str]) -> schema.WeatherResponse:
     # Default Error: Not Found
     resp = schema.WeatherResponse(City=city, Country=country, Error="Not Found")
     try:
-        geolocation = await _query_geolocation_with_cache(city, country)
-        if geolocation:
-            weather_report = await _query_weather(geolocation)
-            if weather_report:
-                resp.Report = weather_report
-                resp.Error = ""
+        weather_report = await _query_weather_with_cache(city=city, country=country)
+        if weather_report:
+            resp.Report = weather_report
+            resp.Error = ""
     except Exception as ex:
         logger.exception(ex)
         # All exception is treated as `System Error`. Error info can be further refined.

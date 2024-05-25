@@ -1,5 +1,6 @@
 import { Space, Typography, Spin } from 'antd';
 import { useCallback } from 'react';
+import { getCityAndCountryString } from './utils';
 
 const { Title, Text } = Typography;
 
@@ -51,7 +52,7 @@ const WeatherResult = ({ weatherData, loading }) => {
 
   return (
     <Space.Compact direction="vertical" style={{ marginLeft: "2%" }}>
-      <Text>{`${weatherData.City}, ${weatherData.Country}`}</Text>
+      <Text>{getCityAndCountryString(weatherData)}</Text>
       <Title level={1} style={{ margin: 0, marginBottom: "5%" }}>
         {weatherData.Group}
       </Title>

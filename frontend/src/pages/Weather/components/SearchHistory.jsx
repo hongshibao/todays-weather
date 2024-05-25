@@ -1,6 +1,7 @@
 import { Divider, Row, Col, Space, Typography, Button } from 'antd';
 import { SearchOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useCallback } from 'react';
+import { getCityAndCountryString } from './utils';
 
 const { Title, Text } = Typography;
 
@@ -36,7 +37,7 @@ const SearchHistory = ({ historyData, setHistoryData, searchHandler }) => {
             style={{ marginTop: "0.8%", marginBottom: "0.5%", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
             <Col span={15}>
-              <Text>{`${idx + 1}. ${item["City"]}, ${item["Country"]}`}</Text>
+              <Text>{`${idx + 1}. ${getCityAndCountryString(item)}`}</Text>
             </Col>
             <Col span={3}>
               <Text>{item["Time"]}</Text>
