@@ -1,6 +1,6 @@
 # todays-weather
 
-This is an app to query current weather for cities in the world. It calls OpenWeather API to get weather information.
+This is an app to query current weather for cities in the world. It calls [OpenWeather API](https://openweathermap.org/api) to get weather information.
 
 ## Set Up
 
