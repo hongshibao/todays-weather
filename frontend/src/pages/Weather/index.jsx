@@ -45,6 +45,7 @@ const Weather = () => {
     return initialValue || [];
   });
   const [weatherData, setWeatherData] = useState(null);
+  const [weatherDataLoading, setWeatherDataLoading] = useState(false);
 
   // Save search historyData to localStorage
   useEffect(() => {
@@ -54,6 +55,7 @@ const Weather = () => {
   const cityFormSubmitHandler = useCallback(async (values) => {
     let resp = {};
     // Call weather API
+    setWeatherDataLoading(true);
     try {
       resp = await getWeather(values.City, values.Country);
     } catch (err) {
@@ -70,6 +72,7 @@ const Weather = () => {
     }
     // Update weatherData
     setWeatherData(newWeatherData);
+    setWeatherDataLoading(false);
     // Update search historyData
     setHistoryData((data) => {
       const currentDate = new Date();
@@ -112,7 +115,7 @@ const Weather = () => {
         <Card>
           <Space direction="vertical" style={{ width: "100%" }}>
             <CityForm submitHandler={cityFormSubmitHandler} />
-            <WeatherResult weatherData={weatherData} />
+            <WeatherResult weatherData={weatherData} loading={weatherDataLoading} />
             <SearchHistory
               historyData={historyData}
               setHistoryData={setHistoryData}

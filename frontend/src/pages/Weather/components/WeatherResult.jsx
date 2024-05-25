@@ -1,4 +1,4 @@
-import { Space, Typography } from 'antd';
+import { Space, Typography, Spin } from 'antd';
 import { useCallback } from 'react';
 
 const { Title, Text } = Typography;
@@ -8,8 +8,9 @@ The WeatherResult component is to display the result weather information.
   weatherData: object {City: str, Country: str, Group: str, Description: str, Temperature: str, Humidity: str, Time: str}
                 weatherData is null means not need to display
                 if Error is inside weatherData, then display Error text (e.g. Not Found)
+  loading: whether weatherData is in loading. Display Spin icon on weatherData loading
 */
-const WeatherResult = ({ weatherData }) => {
+const WeatherResult = ({ weatherData, loading }) => {
   const renderWeatherDataFields = useCallback(() => {
     const fieldNames = ["Description", "Temperature", "Humidity", "Time"];
     let maxFieldWidth = 0;
@@ -29,6 +30,10 @@ const WeatherResult = ({ weatherData }) => {
   // weatherData is null, nothing displayed
   if (!weatherData) {
     return <></>;
+  }
+
+  if (loading) {
+    return <Spin size="large" />;
   }
 
   // Display error info
