@@ -1,6 +1,6 @@
 # todays-weather
 
-This is an app to query today's weather for cities in the world. It calls OpenWeather API to get weather information.
+This is an app to query current weather for cities in the world. It calls OpenWeather API to get weather information.
 
 ## Set Up
 
@@ -22,3 +22,7 @@ To deploy using Docker Compose:
 3. Now access [http://localhost:11180/ui/](http://localhost:11180/ui/). You should be able to see the Web UI.
 
 In this deployment, [NGINX](https://www.nginx.com/) is used as a reverse proxy for the frontend and backend services.
+
+## Design
+
+Please refer to this [doc](./DESIGN.md).
