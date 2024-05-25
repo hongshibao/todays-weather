@@ -30,16 +30,16 @@ const SearchHistory = ({ historyData, setHistoryData, searchHandler }) => {
           <Row
             style={{ marginTop: "0.8%", marginBottom: "0.5%", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
-            <Col span={16}>
+            <Col span={15}>
               <Text>{`${idx + 1}. ${item["City"]}, ${item["Country"]}`}</Text>
             </Col>
-            <Col span={4}>
+            <Col span={3}>
               <Text>{item["Time"]}</Text>
             </Col>
-            <Col span={2}>
+            <Col span={3}>
               <Button shape="circle" icon={<SearchOutlined />} style={{ background: "#EAEAEA" }} onClick={() => searchHandler(item)} />
             </Col>
-            <Col span={2}>
+            <Col span={3}>
               <Button shape="circle" icon={<DeleteOutlined />} style={{ background: "#EAEAEA" }} onClick={() => deleteHistoryData(idx)} />
             </Col>
           </Row>

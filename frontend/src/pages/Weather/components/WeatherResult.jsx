@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 
 const { Title, Text } = Typography;
 
-const WeatherResult = ({ weatherData, style }) => {
+const WeatherResult = ({ weatherData }) => {
   const renderWeatherDataFields = useCallback(() => {
     const fieldNames = ["Description", "Temperature", "Humidity", "Time"];
     let maxFieldWidth = 0;

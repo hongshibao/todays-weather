@@ -97,7 +97,7 @@ const Weather = () => {
       </Header>
       <Content
         style={{
-          padding: '0 28px',
+          padding: '0 8px',
         }}
       >
         <Card
